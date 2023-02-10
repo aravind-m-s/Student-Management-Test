@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "981315476748-dr8pr219a6qhj6a2hta9mm887t7idco4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aravind.student",
+            "certificate_hash": "bd1bfc4c215a779c3c3d2b47625a9c25cb75ad69"
+          }
+        },
+        {
           "client_id": "981315476748-dt68794osddt4c6cs8aivt8k8n7ah9hs.apps.googleusercontent.com",
           "client_type": 3
         }

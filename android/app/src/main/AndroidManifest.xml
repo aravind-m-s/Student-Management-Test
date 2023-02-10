@@ -3,7 +3,11 @@
    <application
         android:label="mock_test"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true"
+        android:enableOnBackInvokedCallback="true"
+
+        >
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -30,5 +34,6 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        
     </application>
 </manifest>
