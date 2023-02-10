@@ -4,6 +4,7 @@ import 'package:mock_test/Core/constants.dart';
 import 'package:mock_test/View/default_auth_title.dart';
 import 'package:mock_test/View/login/screen_login.dart';
 import 'package:mock_test/View/login_with_mobile.dart/screen_login_with_mobile.dart';
+import 'package:mock_test/View/user_detials/screen_user_details.dart';
 
 class ScreenSignUp extends StatelessWidget {
   const ScreenSignUp({super.key});
@@ -56,22 +57,18 @@ class ScreenSignUp extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      CircleAvatar(
+                      const CircleAvatar(
                         radius: 25,
                         backgroundImage: AssetImage('assets/google.png'),
-                      ),
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundImage: AssetImage('assets/facebook.png'),
                       ),
                       GestureDetector(
                         onTap: () {
                           Navigator.of(context)
                               .pushReplacement(MaterialPageRoute(
-                            builder: (context) => ScreenLoginOTP(),
+                            builder: (context) => const ScreenLoginOTP(),
                           ));
                         },
-                        child: CircleAvatar(
+                        child: const CircleAvatar(
                           radius: 25,
                           backgroundImage: AssetImage('assets/mobile.png'),
                         ),
@@ -191,10 +188,6 @@ class SignUpButtonWidget extends StatelessWidget {
           onPressed: () {
             if (formKey.currentState!.validate()) {
               signUp(email, password, context);
-              // .then((value) => Navigator.of(context).push(MaterialPageRoute(
-              //     builder: (ctx) => ScreenUserDetails(
-              //           isEdit: false,
-              //         ))));
             }
           },
           child: Text(
@@ -212,13 +205,34 @@ class SignUpButtonWidget extends StatelessWidget {
 
 Future signUp(email, password, context) async {
   try {
-    await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email.text.trim(), password: password.text.trim());
-    // .then((value) => Navigator.of(context).push(MaterialPageRoute(
-    //       builder: (context) => const ScreenMain(),
-    //     )));
+    await FirebaseAuth.instance
+        .createUserWithEmailAndPassword(
+            email: email.text.trim(), password: password.text.trim())
+        .then((value) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (ctx) => const ScreenUserDetails(
+            isEdit: false,
+          ),
+        ),
+      );
+      file = '';
+    });
   } catch (e) {
-    print(e);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("OOps!!"),
+        content: const Text('Something Went wrong please try again later'),
+        actions: [
+          TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'))
+        ],
+      ),
+    );
   }
 }
 

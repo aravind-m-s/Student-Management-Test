@@ -1,16 +1,28 @@
+import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mock_test/Controller/home/home_bloc.dart';
 import 'package:mock_test/Core/constants.dart';
+import 'package:mock_test/Model/student_model/student_model.dart';
+import 'package:mock_test/View/login/screen_login.dart';
 import 'package:mock_test/View/user_detials/screen_user_details.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
 
 class ScreenProfile extends StatelessWidget {
   const ScreenProfile({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final auth = FirebaseAuth.instance.currentUser;
     return Scaffold(
       body: Container(
         height: double.infinity,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           image: DecorationImage(
               image: AssetImage('assets/background.png'), fit: BoxFit.fill),
         ),
@@ -22,10 +34,15 @@ class ScreenProfile extends StatelessWidget {
                 left: 32,
                 right: 32,
               ),
-              child: ListView(
-                children:
-                    List.generate(4, (index) => ProfileButton(index: index)),
-              ),
+              child: auth == null
+                  ? const Padding(
+                      padding: EdgeInsets.only(top: 50.0),
+                      child: ProfileButton(index: 4),
+                    )
+                  : ListView(
+                      children: List.generate(
+                          4, (index) => ProfileButton(index: index)),
+                    ),
             ),
             const CurvedAppBar(),
             const ProfileImage(),
@@ -49,21 +66,35 @@ class ProfileButton extends StatelessWidget {
       "Edit Profile",
       "Terms and conditions",
       "Privacy Policy",
-      "Logout"
+      "Logout",
+      "Login"
     ];
     final List<IconData> icons = [
       Icons.person,
       Icons.edit_document,
       Icons.lock,
       Icons.logout,
+      Icons.login,
     ];
     return Column(
       children: [
         InkWell(
           onTap: () {
-            Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) => ScreenUserDetails(),
-            ));
+            if (index == 0) {
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => const ScreenUserDetails(),
+              ));
+              file = '';
+            } else if (index == 3) {
+              FirebaseAuth.instance.signOut();
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => const ScreenLogin(),
+              ));
+            } else if (index == 4) {
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => const ScreenLogin(),
+              ));
+            }
           },
           child: Container(
             width: double.infinity,
@@ -104,15 +135,43 @@ class ProfileImage extends StatelessWidget {
     Key? key,
   }) : super(key: key);
 
+  getImage(BuildContext context) async {
+    final std = await FirebaseFirestore.instance.collection('users').get().then(
+          (value) =>
+              value.docs.map((e) => StudentModel.fromJson(e.data())).toList(),
+        );
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final user = std.where((element) => element.id == uid).first;
+    final response = await http.get(Uri.parse(user.file));
+    final documentDirectory = await getApplicationDocumentsDirectory();
+    final fle = File(join(documentDirectory.path, 'imagetest.png'));
+    fle.writeAsBytesSync(response.bodyBytes);
+    file = fle.path;
+    BlocProvider.of<HomeBloc>(context).add(ChangeImage(file: file));
+  }
+
   @override
   Widget build(BuildContext context) {
-    return const Positioned(
+    getImage(context);
+    return Positioned(
       top: 100,
       left: 0,
       right: 0,
-      child: CircleAvatar(
-        backgroundColor: Colors.red,
-        radius: 75,
+      child: BlocBuilder<HomeBloc, HomeState>(
+        builder: (context, state) {
+          if (file == '') {
+            return const CircleAvatar(
+              backgroundColor: Colors.teal,
+              radius: 75,
+              backgroundImage: AssetImage('assets/noimage.png'),
+            );
+          }
+          return CircleAvatar(
+            backgroundColor: Colors.teal,
+            radius: 75,
+            backgroundImage: FileImage(File(file)),
+          );
+        },
       ),
     );
   }
@@ -136,7 +195,7 @@ class CurvedAppBar extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+            children: const [
               Icon(
                 Icons.person,
                 color: Colors.black,

@@ -5,6 +5,7 @@ class StudentModel {
   String email;
   String gender;
   String mobile;
+  String file;
   StudentModel({
     required this.id,
     required this.name,
@@ -12,6 +13,7 @@ class StudentModel {
     required this.email,
     required this.gender,
     required this.mobile,
+    required this.file,
   });
 
   Map<String, dynamic> toJson() => {
@@ -21,9 +23,11 @@ class StudentModel {
         'email': email,
         'gender': gender,
         'mobile': mobile,
+        'file': file,
       };
   factory StudentModel.fromJson(json) {
     return StudentModel(
+      file: json['file'],
       email: json['email'],
       id: json['id'],
       name: json['name'],

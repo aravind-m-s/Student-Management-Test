@@ -1,9 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mock_test/Core/constants.dart';
+import 'package:mock_test/View/bottom_navigation/bottom_navigation.dart';
 import 'package:mock_test/View/default_auth_title.dart';
+import 'package:mock_test/View/home/screen_home.dart';
 import 'package:mock_test/View/login_with_mobile.dart/screen_login_with_mobile.dart';
 import 'package:mock_test/View/sign_up/screen_sign_up.dart';
+import 'package:mock_test/View/user_detials/screen_user_details.dart';
 
 class ScreenLogin extends StatelessWidget {
   const ScreenLogin({super.key});
@@ -165,12 +168,25 @@ Future singIn(TextEditingController email, TextEditingController password,
         .then(
           (value) => Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => const ScreenLogin(),
+              builder: (context) => const BottomNavigation(),
             ),
           ),
         );
   } catch (e) {
-    print(e);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("OOps!!"),
+        content: const Text('Something Went wrong please try again later'),
+        actions: [
+          TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'))
+        ],
+      ),
+    );
   }
 }
 
@@ -187,19 +203,35 @@ class OtherSingInMethods extends StatelessWidget {
         const SizedBox(
           width: 10,
         ),
-        const CircleAvatar(
-          radius: 25,
-          backgroundImage: AssetImage('assets/google.png'),
+        GestureDetector(
+          onTap: () async {
+            await FirebaseAuth.instance
+                .signInWithProvider(GoogleAuthProvider())
+                .then((value) =>
+                    Navigator.of(context).pushReplacement(MaterialPageRoute(
+                      builder: (context) => const ScreenUserDetails(
+                        isEdit: false,
+                      ),
+                    )));
+          },
+          child: const CircleAvatar(
+            radius: 25,
+            backgroundImage: AssetImage('assets/google.png'),
+          ),
         ),
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: Colors.transparent,
-          child: Image.asset('assets/facebook.png'),
-        ),
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: Colors.white,
-          child: Image.asset('assets/mobile.png'),
+        GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const ScreenLoginOTP(),
+              ),
+            );
+          },
+          child: CircleAvatar(
+            radius: 20,
+            backgroundColor: Colors.white,
+            child: Image.asset('assets/mobile.png'),
+          ),
         ),
         const SizedBox(
           width: 10,

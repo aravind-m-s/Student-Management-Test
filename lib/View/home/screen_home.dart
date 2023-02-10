@@ -1,13 +1,23 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mock_test/Controller/home/home_bloc.dart';
 import 'package:mock_test/Core/constants.dart';
+import 'package:mock_test/Model/student_model/student_model.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
 
 class ScreenHome extends StatelessWidget {
   const ScreenHome({super.key});
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback(
+        (_) => BlocProvider.of<HomeBloc>(context).add(GetAllStudents()));
     return Scaffold(
         body: SafeArea(
       child: Container(
@@ -29,10 +39,33 @@ class ScreenHome extends StatelessWidget {
               ),
               kHeight10,
               Expanded(
-                child: ListView.separated(
-                  itemBuilder: (context, index) => const StudentCard(),
-                  separatorBuilder: (context, index) => kHeight10,
-                  itemCount: 10,
+                child: BlocBuilder<HomeBloc, HomeState>(
+                  builder: (context, state) {
+                    if (state.isLoading) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: themeColor,
+                          strokeWidth: 2,
+                        ),
+                      );
+                    } else if (state.favStudents.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No Fav Students found',
+                          style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: themeColor),
+                        ),
+                      );
+                    }
+                    return ListView.separated(
+                      itemBuilder: (context, index) =>
+                          StudentCard(favStudent: state.favStudents[index]),
+                      separatorBuilder: (context, index) => kHeight10,
+                      itemCount: state.favStudents.length,
+                    );
+                  },
                 ),
               ),
             ],
@@ -46,7 +79,9 @@ class ScreenHome extends StatelessWidget {
 class StudentCard extends StatelessWidget {
   const StudentCard({
     super.key,
+    required this.favStudent,
   });
+  final StudentModel favStudent;
 
   @override
   Widget build(BuildContext context) {
@@ -66,9 +101,13 @@ class StudentCard extends StatelessWidget {
             height: 80,
             width: 80,
             decoration: BoxDecoration(
-              color: themeColor,
-              borderRadius: BorderRadius.circular(16),
-            ),
+                color: themeColor,
+                borderRadius: BorderRadius.circular(16),
+                image: const DecorationImage(
+                  image: AssetImage(
+                    'assets/noimage.png',
+                  ),
+                )),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -77,23 +116,33 @@ class StudentCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Text(
-                      'Name of the Student',
-                      style: TextStyle(
+                    Text(
+                      favStudent.name,
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
                       ),
                     ),
                     IconButton(
-                      onPressed: () {},
-                      icon: const Icon(
-                        Icons.favorite_outline,
-                        color: Colors.red,
+                      onPressed: () {
+                        BlocProvider.of<HomeBloc>(context)
+                            .add(AddToFav(favStudent.id));
+                      },
+                      icon: BlocBuilder<HomeBloc, HomeState>(
+                        builder: (context, state) {
+                          return Icon(
+                            state.favStudents.contains(favStudent)
+                                ? Icons.favorite
+                                : Icons.favorite_outline,
+                            color: Colors.red,
+                            size: 30,
+                          );
+                        },
                       ),
-                    ),
+                    )
                   ],
                 ),
-                Text('Qualification of the Student')
+                Text(favStudent.qualification)
               ],
             ),
           ),

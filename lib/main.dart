@@ -1,11 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mock_test/Controller/BottomNavigation/bottom_navigation_bloc.dart';
+import 'package:mock_test/Controller/home/home_bloc.dart';
 import 'package:mock_test/View/bottom_navigation/bottom_navigation.dart';
-import 'package:mock_test/View/home/screen_home.dart';
 import 'package:mock_test/View/login/screen_login.dart';
-import 'package:mock_test/View/sign_up/screen_sign_up.dart';
 
 main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,12 +22,17 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider(
           create: (context) => BottomNavigationBloc(),
-        )
+        ),
+        BlocProvider(
+          create: (context) => HomeBloc(),
+        ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData(useMaterial3: true),
-        home: BottomNavigation(),
+        home: FirebaseAuth.instance.currentUser == null
+            ? const ScreenLogin()
+            : const BottomNavigation(),
       ),
     );
   }

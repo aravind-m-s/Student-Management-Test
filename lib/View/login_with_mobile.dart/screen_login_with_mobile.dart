@@ -1,8 +1,13 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mock_test/Core/constants.dart';
+import 'package:mock_test/View/bottom_navigation/bottom_navigation.dart';
 import 'package:mock_test/View/default_auth_title.dart';
 import 'package:mock_test/View/sign_up/screen_sign_up.dart';
+import 'package:mock_test/View/user_detials/screen_user_details.dart';
 import 'package:pinput/pinput.dart';
+
+String verification = '';
 
 class ScreenLoginOTP extends StatelessWidget {
   const ScreenLoginOTP({super.key});
@@ -38,12 +43,15 @@ class ScreenLoginOTP extends StatelessWidget {
                 ),
                 MobileInput(mobileKey: mobileKey, mobile: mobile),
                 kHeight10,
-                ConfirmButton(formKey: mobile, mobile: mobile),
+                ConfirmButton(formKey: mobileKey, mobile: mobile),
                 kHeight10,
                 const DefaultAuthtTitle(title: "Enter the OTP", subTitle: ""),
                 OTPInput(formKey: otpKey, controller: otp),
                 kHeight10,
-                LogIn(formKey: otp),
+                LogIn(
+                  formKey: otpKey,
+                  otp: otp,
+                ),
                 SizedBox(
                   height: 50,
                 ),
@@ -78,7 +86,16 @@ class ConfirmButton extends StatelessWidget {
           style: ElevatedButton.styleFrom(backgroundColor: themeColor),
           onPressed: () {
             if (formKey.currentState!.validate()) {
-              print('Validate');
+              FirebaseAuth.instance.verifyPhoneNumber(
+                phoneNumber: mobile.text,
+                verificationCompleted: (phoneAuthCredential) {},
+                verificationFailed: (error) {},
+                codeSent: (verificationId, forceResendingToken) {
+                  verification = verificationId;
+                  print('Sent');
+                },
+                codeAutoRetrievalTimeout: (verificationId) {},
+              );
             }
           },
           child: Text(
@@ -98,8 +115,10 @@ class LogIn extends StatelessWidget {
   const LogIn({
     Key? key,
     required this.formKey,
+    required this.otp,
   }) : super(key: key);
   final formKey;
+  final TextEditingController otp;
 
   @override
   Widget build(BuildContext context) {
@@ -110,9 +129,37 @@ class LogIn extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(backgroundColor: themeColor),
-          onPressed: () {
+          onPressed: () async {
             if (formKey.currentState!.validate()) {
-              print('Validate');
+              try {
+                PhoneAuthCredential credential = PhoneAuthProvider.credential(
+                    verificationId: verification, smsCode: otp.text.trim());
+                await FirebaseAuth.instance
+                    .signInWithCredential(credential)
+                    .then(
+                      (value) => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const ScreenUserDetails(),
+                        ),
+                      ),
+                    );
+              } catch (e) {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text("OOps!!"),
+                    content: const Text(
+                        'Something Went wrong please try again later'),
+                    actions: [
+                      TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('OK'))
+                    ],
+                  ),
+                );
+              }
             }
           },
           child: Text(
@@ -216,7 +263,7 @@ class MobileInput extends StatelessWidget {
         validator: (value) {
           if (value == null || value.isEmpty) {
             return "Mobile number cannot be empty";
-          } else if (value.length != 12) {
+          } else if (value.length != 13) {
             return "Enter a valid mobile number";
           } else {
             return null;
@@ -228,7 +275,7 @@ class MobileInput extends StatelessWidget {
         decoration: InputDecoration(
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(
+            borderSide: const BorderSide(
                 // color: darkMode ? darkSubTitleColor : lightSubTitleColor,
                 ),
           ),
