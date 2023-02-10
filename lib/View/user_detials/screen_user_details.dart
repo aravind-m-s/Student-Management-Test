@@ -120,7 +120,6 @@ class ImageSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () async {
-        print("Clicked");
         await ImagePicker()
             .pickImage(source: ImageSource.gallery)
             .then((value) {
